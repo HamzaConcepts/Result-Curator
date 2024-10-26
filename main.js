@@ -4,6 +4,7 @@ const columnLabels = [
 ];
 
 let currentData = [];
+let originalData = []; // To store the original order
 
 function displayData(data) {
     const container = document.getElementById('tableContainer');
@@ -18,7 +19,6 @@ function displayData(data) {
     columnLabels.forEach(label => {
         const th = document.createElement('th');
         th.textContent = label;
-        th.addEventListener('click', () => sortData(columnLabels.indexOf(label)));
         headerRow.appendChild(th);
     });
     
@@ -46,27 +46,43 @@ function displayData(data) {
     container.appendChild(table);
 }
 
-function sortData(columnIndex) {
-    const dataIndexMap = [0, 1, 2, 18, 19]; // Maps display columns to data columns
-    const actualDataIndex = dataIndexMap[columnIndex];
-    
+function sortData() {
     currentData.sort((a, b) => {
-        const valueA = a[actualDataIndex];
-        const valueB = b[actualDataIndex];
-        
-        // Try numeric sort first
-        const numA = parseFloat(valueA);
-        const numB = parseFloat(valueB);
-        
-        if (!isNaN(numA) && !isNaN(numB)) {
-            return numB - numA;
-        }
-        
-        // Fall back to string sort
-        return valueA.localeCompare(valueB);
+        // Sort by total marks (index 18)
+        const valueA = parseFloat(a[18]) || 0; // Convert to number, default to 0 if invalid
+        const valueB = parseFloat(b[18]) || 0;
+        return valueB - valueA; // Descending order
     });
     
     displayData(currentData);
+}
+
+function resetData() {
+    currentData = [...originalData]; // Restore original data
+    displayData(currentData);
+}
+
+// Create and add buttons
+function createButtons() {
+    const controlsDiv = document.createElement('div');
+    controlsDiv.style.marginTop = '10px';
+    controlsDiv.style.marginBottom = '10px';
+
+    const sortButton = document.createElement('button');
+    sortButton.textContent = 'Sort by Total Marks';
+    sortButton.onclick = sortData;
+    sortButton.style.marginRight = '10px';
+    
+    const resetButton = document.createElement('button');
+    resetButton.textContent = 'Reset Order';
+    resetButton.onclick = resetData;
+    
+    controlsDiv.appendChild(sortButton);
+    controlsDiv.appendChild(resetButton);
+    
+    // Insert buttons after file input
+    const fileInput = document.getElementById('csvFile');
+    fileInput.parentNode.insertBefore(controlsDiv, fileInput.nextSibling);
 }
 
 document.getElementById('csvFile').addEventListener('change', function(e) {
@@ -79,13 +95,18 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             const csvData = event.target.result;
             const rows = csvData.split('\n');
             currentData = rows.slice(1) // Skip header row
+                .filter(row => row.trim()) // Remove empty rows
                 .map(row => {
                     const values = row.split(',');
                     return values.map(value => value.trim());
                 });
 
+            // Store original data order
+            originalData = [...currentData];
+
             // Initial display
             displayData(currentData);
+            createButtons(); // Create buttons after data is loaded
         } catch (error) {
             console.error('Error processing file:', error);
             alert('Error processing file. Please check the console for details.');
