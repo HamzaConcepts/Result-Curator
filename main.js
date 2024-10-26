@@ -79,7 +79,6 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             const csvData = event.target.result;
             const rows = csvData.split('\n');
             currentData = rows.slice(1) // Skip header row
-                .filter(row => row.trim()) // Remove empty rows
                 .map(row => {
                     const values = row.split(',');
                     return values.map(value => value.trim());
